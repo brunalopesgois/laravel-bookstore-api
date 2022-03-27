@@ -18,4 +18,9 @@ class Book extends Model
         'author_id',
         'publisher_id',
     ];
+
+    protected $hidden = [
+        'created_at',
+        'updated_at'
+    ];
 }
