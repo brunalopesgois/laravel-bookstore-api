@@ -15,11 +15,23 @@ class CreateBooksTable extends Migration
     {
         Schema::create('books', function (Blueprint $table) {
             $table->bigIncrements('id');
+            $table->string('isbn', 17)->unique();
             $table->string('title');
-            $table->string('cover')->nullable();
-            $table->string('genre');
             $table->text('description');
+            $table->string('genre');
+            $table->string('cover_url')->nullable();
             $table->decimal('sale_price', 4, 2);
+            $table->integer('author_id');
+            $table->integer('publisher_id');
+            $table->timestamps();
+            $table
+                ->foreign('author_id')
+                ->references('id')
+                ->on('author');
+            $table
+                ->foreign('publisher_id')
+                ->references('id')
+                ->on('publishers');
         });
     }
 
