@@ -3,18 +3,28 @@
 namespace App\Repositories\Books;
 
 use App\Dtos\Books\CreateBookDto;
+use App\Exceptions\NotFoundException;
+use App\Models\Author;
 use App\Models\Book;
+use App\Models\Publisher;
+use DomainException;
 use Exception;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class BookRepositoryEloquent implements BookRepositoryInterface
 {
-    private $model;
+    private Book $bookModel;
+
+    private Author $authorModel;
+
+    private Publisher $publisherModel;
 
     public function __construct()
     {
-        $this->model = new Book();
+        $this->bookModel = new Book();
+        $this->authorModel = new Author();
+        $this->publisherModel = new Publisher();
     }
 
     public function findAll(array $queryParams)
@@ -24,7 +34,7 @@ class BookRepositoryEloquent implements BookRepositoryInterface
         $limit = $queryParams['limit'] ?? 12;
 
         if (isset($queryParams['search'])) {
-            return $this->model
+            return $this->bookModel
                 ->query()
                 ->where('title', 'LIKE', "%{$queryParams['search']}%")
                 ->with(['author', 'publisher'])
@@ -32,14 +42,14 @@ class BookRepositoryEloquent implements BookRepositoryInterface
         }
 
         if ($order == 'desc') {
-            return $this->model
+            return $this->bookModel
                 ->query()
                 ->orderByDesc($sort)
                 ->with(['author', 'publisher'])
                 ->paginate($limit);
         }
 
-        return $this->model
+        return $this->bookModel
             ->query()
             ->orderBy($sort)
             ->with(['author', 'publisher'])
@@ -48,14 +58,16 @@ class BookRepositoryEloquent implements BookRepositoryInterface
 
     public function findById(string $id): ?Book
     {
-        return $this->model->find($id);
+        return $this->bookModel->find($id);
     }
 
     public function create(CreateBookDto $createBookDto): void
     {
+        $this->canCreateBook($createBookDto);
+
         DB::beginTransaction();
         try {
-            $this->model->create([
+            $this->bookModel->create([
                 'isbn' => $createBookDto->isbn,
                 'title' => $createBookDto->title,
                 'description' => $createBookDto->description,
@@ -108,5 +120,24 @@ class BookRepositoryEloquent implements BookRepositoryInterface
         $book->save();
 
         return $book;
+    }
+
+    private function canCreateBook(CreateBookDto $createBookDto): void
+    {
+        $bookExists = $this->bookModel->where('isbn', $createBookDto->isbn)->first();
+
+        if ($bookExists) {
+            throw new DomainException("Book with isbn {$createBookDto->isbn} already exists");
+        }
+
+        $author = $this->authorModel->find($createBookDto->authorId);
+        if (!$author) {
+            throw new NotFoundException('Author', $createBookDto->authorId);
+        }
+
+        $publisher = $this->publisherModel->find($createBookDto->publisherId);
+        if (!$publisher) {
+            throw new NotFoundException('Publisher', $createBookDto->publisherId);
+        }
     }
 }

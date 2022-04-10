@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Dtos\Books\CreateBookDto;
+use App\Exceptions\NotFoundException;
 use App\Http\Requests\CreateBookRequest;
 use App\Repositories\Books\BookRepositoryInterface;
 use Exception;
@@ -61,11 +62,10 @@ class BookController extends Controller
 
         try {
             $this->repository->create($createBookDto);
+        } catch (NotFoundException $e) {
+            return response()->json(['error' => $e->getMessage()], 404);
         } catch (Exception $e) {
-            return response()->json([
-                'message' => $e->getMessage(),
-                'stackTrace' => $e->getTraceAsString()
-            ], 500);
+            return response()->json(['error' => $e->getMessage()], 500);
         }
 
         return response()->json('', 201);
