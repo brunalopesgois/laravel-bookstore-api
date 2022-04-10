@@ -27,7 +27,7 @@ class CreateBooksTable extends Migration
             $table
                 ->foreign('author_id')
                 ->references('id')
-                ->on('author');
+                ->on('authors');
             $table
                 ->foreign('publisher_id')
                 ->references('id')
