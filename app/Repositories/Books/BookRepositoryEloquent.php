@@ -16,17 +16,23 @@ class BookRepositoryEloquent implements BookRepositoryInterface
 
     public function findAll(array $queryParams)
     {
-        $orderBy = $queryParams['order'] ?? 'title';
+        $sort = $queryParams['sort'] ?? 'title';
+        $order = $queryParams['order'] ?? 'asc';
         $limit = $queryParams['limit'] ?? 12;
 
         if (isset($queryParams['search'])) {
             return $this->model
                 ->query()
                 ->where('title', 'LIKE', "%{$queryParams['search']}%")
+                ->with(['author', 'publisher'])
                 ->paginate($limit);
         }
 
-        return $this->model->query()->OrderBy($orderBy)->paginate($limit);
+        return $this->model
+            ->query()
+            ->OrderBy($sort, $order)
+            ->with(['author', 'publisher'])
+            ->paginate($limit);
     }
 
     public function findById($id)
