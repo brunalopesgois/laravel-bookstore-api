@@ -28,7 +28,7 @@ class BookRepositoryEloquent implements BookRepositoryInterface
                 ->paginate($limit);
         }
 
-        if ($order === 'desc') {
+        if ($order == 'desc') {
             return $this->model
                 ->query()
                 ->orderByDesc($sort)
