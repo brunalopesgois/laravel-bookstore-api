@@ -1,8 +1,8 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Books;
 
-use App\Book;
+use App\Models\Book;
 use Illuminate\Support\Facades\DB;
 
 class BookRepositoryEloquent implements BookRepositoryInterface
@@ -14,16 +14,19 @@ class BookRepositoryEloquent implements BookRepositoryInterface
         $this->model = new Book();
     }
 
-    public function findAll($search)
+    public function findAll(array $queryParams)
     {
-        if ($search) {
+        $orderBy = $queryParams['order'] ?? 'title';
+        $limit = $queryParams['limit'] ?? 12;
+
+        if (isset($queryParams['search'])) {
             return $this->model
                 ->query()
-                ->where('title', 'LIKE', "%{$search}%")
-                ->get();
+                ->where('title', 'LIKE', "%{$queryParams['search']}%")
+                ->paginate($limit);
         }
 
-        return $this->model->query()->OrderBy('title')->paginate(12);
+        return $this->model->query()->OrderBy($orderBy)->paginate($limit);
     }
 
     public function findById($id)

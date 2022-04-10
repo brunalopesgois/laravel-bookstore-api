@@ -1,10 +1,10 @@
 <?php
 
-namespace App\Repositories;
+namespace App\Repositories\Books;
 
 interface BookRepositoryInterface
 {
-    public function findAll($search);
+    public function findAll(array $queryParams);
     public function findById($id);
     public function create($title, $cover, $genre, $description, $salePrice);
     public function delete($id);

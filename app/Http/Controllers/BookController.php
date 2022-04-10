@@ -2,23 +2,31 @@
 
 namespace App\Http\Controllers;
 
-use App\Repositories\BookRepositoryEloquent;
+use App\Repositories\Books\BookRepositoryInterface;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 
 class BookController extends Controller
 {
-    public function index(Request $request, BookRepositoryEloquent $repository)
+    private BookRepositoryInterface $repository;
+
+    public function __construct(BookRepositoryInterface $repository)
     {
-        $books = $repository->findAll($request->query('search'));
+        $this->repository = $repository;
+    }
+
+    public function index(Request $request): JsonResponse
+    {
+        $books = $this->repository->findAll($request->query());
 
         return response()->json($books);
     }
 
-    public function show(int $id, BookRepositoryEloquent $repository)
+    public function show(int $id): JsonResponse
     {
-        $book = $repository->findById($id);
+        $book = $this->repository->findById($id);
 
         if (is_null($book)) {
             return response()->json('', 204);
@@ -27,7 +35,7 @@ class BookController extends Controller
         return response()->json($book);
     }
 
-    public function store(Request $request, BookRepositoryEloquent $repository)
+    public function store(Request $request)
     {
         $request->validate([
             'title' => 'required|min:3|max:255',
@@ -44,7 +52,7 @@ class BookController extends Controller
         if ($request->hasFile('image')) {
             $cover = $request->file('image')->storeAs('/storage/book', $request->file('image')->getClientOriginalName());
         }
-        $book = $repository->create(
+        $book = $this->repository->create(
             $request->title,
             $cover,
             $request->genre,
@@ -55,18 +63,18 @@ class BookController extends Controller
         return response()->json($book);
     }
 
-    public function destroy(int $id, BookRepositoryEloquent $repository)
+    public function destroy(int $id)
     {
         if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
             return response()->json('Unauthorized', 403);
         }
 
-        $response = $repository->delete($id);
+        $response = $this->repository->delete($id);
 
         return response()->json($response['message'], $response['statusCode']);
     }
 
-    public function update(int $id, Request $request, BookRepositoryEloquent $repository)
+    public function update(int $id, Request $request)
     {
         $request->validate([
             'title' => 'required|min:3|max:255',
@@ -84,7 +92,7 @@ class BookController extends Controller
             $cover = $request->file('image')->storeAs('/storage/book', $request->file('image')->getClientOriginalName());
         }
 
-        $book = $repository->update(
+        $book = $this->repository->update(
             $id,
             $request->title,
             $cover,
