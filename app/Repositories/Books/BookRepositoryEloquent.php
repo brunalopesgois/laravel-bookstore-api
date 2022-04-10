@@ -43,7 +43,7 @@ class BookRepositoryEloquent implements BookRepositoryInterface
             ->paginate($limit);
     }
 
-    public function findById($id)
+    public function findById(string $id): Book
     {
         return $this->model->find($id);
     }
