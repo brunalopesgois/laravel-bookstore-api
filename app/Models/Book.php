@@ -26,26 +26,11 @@ class Book extends Model
 
     public function author()
     {
-        $this->belongsTo(Author::class);
+        return $this->belongsTo(Author::class);
     }
 
     public function publisher()
     {
-        $this->belongsTo(Publisher::class);
-    }
-
-    public function warehouse()
-    {
-        $this->hasOne(Warehouse::class);
-    }
-
-    public function orderItems()
-    {
-        $this->belongsToMany(OrderItem::class);
-    }
-
-    public function orders()
-    {
-        $this->belongsToMany(Order::class)->using(OrderItem::class);
+        return $this->belongsTo(Publisher::class);
     }
 }

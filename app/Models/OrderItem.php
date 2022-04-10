@@ -25,11 +25,11 @@ class OrderItem extends Pivot
 
     public function order()
     {
-        $this->belongsTo(Order::class);
+        return $this->belongsTo(Order::class);
     }
 
     public function book()
     {
-        $this->hasOne(Book::class);
+        return $this->hasOne(Book::class);
     }
 }

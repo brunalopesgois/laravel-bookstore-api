@@ -26,11 +26,11 @@ class Customer extends Model
 
     public function address()
     {
-        $this->hasOne(Address::class);
+        return $this->hasOne(Address::class);
     }
 
     public function orders()
     {
-        $this->hasMany(Order::class);
+        return $this->hasMany(Order::class);
     }
 }

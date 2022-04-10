@@ -24,11 +24,11 @@ class Publisher extends Model
 
     public function books()
     {
-        $this->hasMany(Book::class);
+        return $this->hasMany(Book::class);
     }
 
     public function address()
     {
-        $this->hasOne(Address::class);
+        return $this->hasOne(Address::class);
     }
 }
