@@ -2,11 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Dtos\Books\CreateBookDto;
+use App\Http\Requests\CreateBookRequest;
 use App\Repositories\Books\BookRepositoryInterface;
+use Exception;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Gate;
 
 class BookController extends Controller
 {
@@ -35,39 +36,46 @@ class BookController extends Controller
         return response()->json($book);
     }
 
-    public function store(Request $request)
+    public function store(CreateBookRequest $request): JsonResponse
     {
-        $request->validate([
-            'title' => 'required|min:3|max:255',
-            'genre' => 'required',
-            'description' => 'required',
-            'sale_price' => 'required'
-        ]);
+        $validatedRequest = $request->validated();
 
-        if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
-            return response()->json('Unauthorized', 403);
-        }
-
-        $cover = null;
+        $coverUrl = null;
         if ($request->hasFile('image')) {
-            $cover = $request->file('image')->storeAs('/storage/book', $request->file('image')->getClientOriginalName());
+            $coverUrl = $request->file('image')->storeAs(
+                '/storage/book',
+                $request->file('image')->getClientOriginalName()
+            );
         }
-        $book = $this->repository->create(
-            $request->title,
-            $cover,
-            $request->genre,
-            $request->description,
-            $request->sale_price
+
+        $createBookDto = new CreateBookDto(
+            $validatedRequest['isbn'],
+            $validatedRequest['title'],
+            $validatedRequest['description'],
+            $validatedRequest['genre'],
+            $validatedRequest['sale_price'],
+            $validatedRequest['author_id'],
+            $validatedRequest['publisher_id'],
+            $coverUrl
         );
 
-        return response()->json($book);
+        try {
+            $this->repository->create($createBookDto);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => $e->getMessage(),
+                'stackTrace' => $e->getTraceAsString()
+            ], 500);
+        }
+
+        return response()->json('', 201);
     }
 
     public function destroy(int $id)
     {
-        if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
-            return response()->json('Unauthorized', 403);
-        }
+        // if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
+        //     return response()->json('Unauthorized', 403);
+        // }
 
         $response = $this->repository->delete($id);
 
@@ -83,9 +91,9 @@ class BookController extends Controller
             'sale_price' => 'required'
         ]);
 
-        if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
-            return response()->json('Unauthorized', 403);
-        }
+        // if (!Gate::forUser(Auth::guard('api')->user())->allows('can-administrate')) {
+        //     return response()->json('Unauthorized', 403);
+        // }
 
         $cover = null;
         if ($request->hasFile('image')) {

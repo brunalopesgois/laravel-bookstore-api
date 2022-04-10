@@ -2,7 +2,10 @@
 
 namespace App\Repositories\Books;
 
+use App\Dtos\Books\CreateBookDto;
 use App\Models\Book;
+use Exception;
+use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
 
 class BookRepositoryEloquent implements BookRepositoryInterface
@@ -43,24 +46,30 @@ class BookRepositoryEloquent implements BookRepositoryInterface
             ->paginate($limit);
     }
 
-    public function findById(string $id): Book
+    public function findById(string $id): ?Book
     {
         return $this->model->find($id);
     }
 
-    public function create($title, $cover, $genre, $description, $salePrice)
+    public function create(CreateBookDto $createBookDto): void
     {
         DB::beginTransaction();
-        $book = Book::create([
-            'title' => $title,
-            'cover' => $cover,
-            'genre' => $genre,
-            'description' => $description,
-            'sale_price' => $salePrice
-        ]);
-        DB::commit();
-
-        return $book;
+        try {
+            $this->model->create([
+                'isbn' => $createBookDto->isbn,
+                'title' => $createBookDto->title,
+                'description' => $createBookDto->description,
+                'genre' => $createBookDto->genre,
+                'sale_price' => $createBookDto->salePrice,
+                'author_id' => $createBookDto->authorId,
+                'publisher_id' => $createBookDto->publisherId,
+                'cover_url' => $createBookDto->coverUrl
+            ]);
+            DB::commit();
+        } catch (QueryException $e) {
+            DB::rollBack();
+            throw new Exception($e);
+        }
     }
 
     public function delete($id)
