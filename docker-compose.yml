@@ -1,0 +1,51 @@
+version: '3'
+
+services:
+  nginx:
+    image: nginx:stable-alpine
+    container_name: bookstore-api-nginx
+    ports:
+      - "8000:80"
+    links:
+      - app
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/site.conf:/etc/nginx/conf.d/default.conf:rw
+      - ./docker/logs/nginx:/var/logs/nginx:rw
+    depends_on:
+      - app
+    networks:
+      - app-network
+    restart: unless-stopped
+    tty: true
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: bookstore-api-app
+    container_name: bookstore-api-app
+    volumes:
+      - ./:/var/www
+    networks:
+      - app-network
+    restart: unless-stopped
+    tty: true
+  # postgres:
+  #   image: postgres:latest-alpine
+  #   container_name: bookstore_api_postgres
+  #   restart: unless-stoped
+  #   ports:
+  #     - "5433:5432"
+  #   volumes:
+  #     - ./docker/postgres:/var/lib/postgresql/data
+  #   environment:
+  #     - POSTGRES_USER: ${DB_USERNAME}
+  #     - POSTGRES_PASSWORD: ${DB_PASSWORD}
+  #     - POSTGRES_DB: ${DB_DATABASE}
+  #     - POSTGRES_HOST_AUTH_METHOD: "trust"
+  #   networks:
+  #     - app-network
+
+networks:
+  app-network:
+    driver: bridge
